@@ -6,9 +6,14 @@
        (clojure.string/join "|")
        (re-pattern)))
 
+(defn first-if-set [val]
+  (if (set? val)
+    (first val)
+    val))
+
 (defn get-url [regex url diff]
   (->> diff
-       (first)
+       (first-if-set)
        (map (fn [[k v]] [(str k) (str v)]))
        (into {})
        (clojure.string/replace url regex)))
@@ -16,16 +21,16 @@
 (defn build-url [http-method url diff new-state]
   (let [regex (get-regex url)]
     (condp = http-method
-      :put (get-url regex url diff new-state)
+      :put (get-url regex url diff)
       :post (get-url regex url diff)
       :delete (get-url regex url diff)
-      :list url
       :get (get-url regex url diff))))
 
 (defn is-post? [diff state new-state]
   (let [n-state-len (count new-state)
         state-len (count state)]
     (and (not (nil? diff))
+         (> (count diff) 0)
          (set? new-state)
          (set? state)
          (> n-state-len state-len))))
@@ -34,6 +39,7 @@
   (let [n-state-len (count new-state)
         state-len (count state)]
     (and (not (nil? diff))
+         (> (count diff) 0)
          (set? new-state)
          (set? state)
          (< n-state-len state-len))))
@@ -47,22 +53,15 @@
          (set? state)
          (> (count changed) 0))))
 
-(defn is-list? [state]
-  (and (not (nil? state))
-       (set? state)
-       (= (count state) 0)))
-
 (defn is-get? [item]
-  (and (not (set? item))
-       (nil? item)))
+  (not (set? item)))
 
 (defn get-http-method [diff state new-state]
   (cond
     (is-put? diff state new-state) :put
     (is-post? diff state new-state) :post
     (is-delete? diff state new-state) :delete
-    (is-list? state) :list
-    (is-get? state) :get
+    (is-get? new-state) :get
     :else nil))
 
 (defn vec-to-set [val]
@@ -84,7 +83,6 @@
   (condp = http-method
     :put (first diff)
     :post (first diff)
-    :list nil
     :delete nil
     :get nil))
 
@@ -134,5 +132,3 @@
 (defn build-http-requests [old-state new-state remotes]
   (let [ks (keys remotes)]
     (mapv #(build-http-request {:old-state old-state :new-state new-state :remotes remotes :key %}) ks)))
-
-(build-http-requests old-state new-state remotes)
