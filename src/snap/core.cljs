@@ -1,10 +1,12 @@
-(ns snap.core)
+(ns snap.core
+  (:require [clojure.set :refer [difference]]
+           [clojure.string :as string]))
 
 (defn get-regex [str]
-  (->> str
-       (re-seq #":\w+")
-       (clojure.string/join "|")
-       (re-pattern)))
+  (some->> str
+           (re-seq #":\w+")
+           (string/join "|")
+           (re-pattern)))
 
 (defn first-if-set [val]
   (if (set? val)
@@ -12,11 +14,13 @@
     val))
 
 (defn get-url [regex url diff]
-  (->> diff
-       (first-if-set)
-       (map (fn [[k v]] [(str k) (str v)]))
-       (into {})
-       (clojure.string/replace url regex)))
+  (if (nil? regex)
+    url
+    (->> diff
+         (first-if-set)
+         (map (fn [[k v]] [(str k) (str v)]))
+         (into {})
+         (string/replace url regex))))
 
 (defn build-url [http-method url diff new-state]
   (let [regex (get-regex url)]
@@ -49,23 +53,25 @@
         state-len (count state)
         changed (filter identity diff)]
     (and (= n-state-len state-len)
-         (set? new-state)
-         (set? state)
+         (or (set? new-state)
+             (map? new-state)
+             (set? state)
+             (map? state))
          (> (count changed) 0))))
 
-(defn is-get? [item]
-  (not (set? item)))
+(defn is-get? [new]
+  (not (nil? new)))
 
-(defn get-http-method [diff state new-state]
+(defn get-http-method [diff old new]
   (cond
-    (is-put? diff state new-state) :put
-    (is-post? diff state new-state) :post
-    (is-delete? diff state new-state) :delete
-    (is-get? new-state) :get
+    (is-put? diff old new) :put
+    (is-post? diff old new) :post
+    (is-delete? diff old new) :delete
+    (is-get? new) :get
     :else nil))
 
 (defn vec-to-set [val]
-  (if (vector? val)
+  (if (or (vector? val))
     (set val)
     val))
 
@@ -73,11 +79,17 @@
   (->> (mapv #(get % k) [old-state new-state])
        (mapv vec-to-set)))
 
+(defn map-to-set [m]
+  (if (map? m)
+    (set (conj [] m))
+    m))
+
 (defn get-diff [old new]
   (->> [old new]
+       (mapv map-to-set)
        (sort-by count)
        (reverse)
-       (apply clojure.set/difference)))
+       (apply difference)))
 
 (defn get-body [http-method diff]
   (condp = http-method
@@ -131,4 +143,6 @@
 
 (defn build-http-requests [old-state new-state remotes]
   (let [ks (keys remotes)]
-    (mapv #(build-http-request {:old-state old-state :new-state new-state :remotes remotes :key %}) ks)))
+    (->> ks
+         (mapv #(build-http-request {:old-state old-state :new-state new-state :remotes remotes :key %}))
+         (filterv (comp not nil?)))))
