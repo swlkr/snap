@@ -91,28 +91,28 @@
           new-state {:comments []}
           remotes {:comments {:get "/comments"}}
           reqs (build-http-requests old-state new-state remotes)]
-      (is (= reqs [{:url "/comments" :method :get :body nil}]))))
+      (is (= reqs [{:url "/comments" :method :get :body nil :key :comments}]))))
 
   (testing "get request with id param"
     (let [old-state {:comments nil}
           new-state {:comments {:id 1}}
           remotes {:comments {:get "/comments/:id"}}
           reqs (build-http-requests old-state new-state remotes)]
-      (is (= reqs [{:url "/comments/1" :method :get :body nil}]))))
+      (is (= reqs [{:url "/comments/1" :method :get :body nil :key :comments}]))))
 
   (testing "get request with other id param"
     (let [old-state {:comment nil}
           new-state {:comment {:post_id 1 :id 2}}
           remotes {:comment {:get "/posts/:post_id/comments/:id"}}
           reqs (build-http-requests old-state new-state remotes)]
-      (is (= reqs [{:url "/posts/1/comments/2" :method :get :body nil}]))))
+      (is (= reqs [{:url "/posts/1/comments/2" :method :get :body nil :key :comment}]))))
 
   (testing "get request with other id param only"
     (let [old-state {:comments nil}
           new-state {:comments {:post_id 12}}
           remotes {:comments {:get "/posts/:post_id/comments"}}
           reqs (build-http-requests old-state new-state remotes)]
-      (is (= reqs [{:url "/posts/12/comments" :method :get :body nil}]))))
+      (is (= reqs [{:url "/posts/12/comments" :method :get :body nil :key :comments}]))))
 
   (testing "when a remote doesn't exist in state"
     (let [old {:comment nil}
@@ -133,18 +133,18 @@
           n {:comments [{:post_id 13 :id 1 :content "new comment"}]}
           r {:comments {:post "/posts/:post_id/comments"}}
           results (build-http-requests o n r)]
-      (is (= results [{:url "/posts/13/comments" :method :post :body {:post_id 13 :id 1 :content "new comment"}}]))))
+      (is (= results [{:url "/posts/13/comments" :method :post :body {:post_id 13 :id 1 :content "new comment"} :key :comments}]))))
 
   (testing "put request without a list"
     (let [o {:r {:id 1 :title "t" :content "c"}}
           n {:r {:id 1 :title "title" :content "content"}}
           r {:r {:put "/posts/:id"}}
           results (build-http-requests o n r)]
-      (is (= results [{:url "/posts/1" :method :put :body {:id 1 :title "title" :content "content"}}]))))
+      (is (= results [{:key :r :url "/posts/1" :method :put :body {:id 1 :title "title" :content "content"}}]))))
 
   (testing "put request with a vec"
     (let [o {:r [{:id 1 :title "t" :content "c"}]}
           n {:r [{:id 1 :title "title" :content "content"}]}
           r {:r {:put "/posts/:id"}}
           results (build-http-requests o n r)]
-      (is (= results [{:url "/posts/1" :method :put :body {:id 1 :title "title" :content "content"}}])))))
+      (is (= results [{:key :r :url "/posts/1" :method :put :body {:id 1 :title "title" :content "content"}}])))))

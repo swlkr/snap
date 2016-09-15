@@ -131,7 +131,7 @@
     (merge {:body body} params)))
 
 (defn build-http-request [params]
-  (let [{:keys [k old-state new-state remotes]} params]
+  (let [{:keys [key old-state new-state remotes]} params]
     (some-> params
             (merge-sets)
             (merge-diff)
@@ -139,7 +139,7 @@
             (merge-remote)
             (merge-url)
             (merge-body)
-            (select-keys [:url :method :body]))))
+            (select-keys [:url :method :body :key]))))
 
 (defn build-http-requests [old-state new-state remotes]
   (let [ks (keys remotes)]
