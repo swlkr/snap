@@ -31,7 +31,7 @@ Then, set up your remotes, global state and, oh snap! restful http requests from
 (def new-state (update-in app-state [:posts] conj {:id 2 :title "Hodor hodor" :content "Hodor"})
 
 (snap/build-http-requests app-state new-state remotes)
-; => [{:url "/posts" :method :post :body {:id 2 :title "Hodor hodor" :content "Hodor"}}]
+; => [{:url "/posts" :method :post :body {:id 2 :title "Hodor hodor" :content "Hodor"} :key :posts}]
 ```
 
 Development
