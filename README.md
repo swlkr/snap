@@ -11,7 +11,7 @@ Usage
 In your `project.clj`, add the following dependency:
 
 ```clojure
-[snap "0.1.0"]
+[snap "0.2.0"]
 ```
 
 Then, set up your remotes, global state and, oh snap! restful http requests from state changes!
