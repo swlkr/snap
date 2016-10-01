@@ -2,11 +2,11 @@
   (:require [cljs.test :refer-macros [deftest is testing]]
             [snap.core :refer [get-sets
                                get-diff
-                               build-http-requests
+                               diff
                                get-http-method]]))
 
 ; test remotes that don't exist in old-state
-; test remotes taht don't exist in new-state
+; test remotes that don't exist in new-state
 ; test remotes
 
 (deftest test-get-sets
@@ -85,66 +85,73 @@
           m (get-http-method diff old new)]
       (is (= :put :put)))))
 
-(deftest test-build-http-requests
+(deftest test-diff
   (testing "get request without params"
     (let [old-state {:comments []}
           new-state {:comments []}
           remotes {:comments {:get "/comments"}}
-          reqs (build-http-requests old-state new-state remotes)]
-      (is (= reqs [{:url "/comments" :method :get :body nil :key :comments}]))))
+          reqs (diff old-state new-state remotes)]
+      (is (= reqs [{:url "/comments" :method :get :body nil :path [:comments]}]))))
 
   (testing "get request with id param"
     (let [old-state {:comments nil}
           new-state {:comments {:id 1}}
           remotes {:comments {:get "/comments/:id"}}
-          reqs (build-http-requests old-state new-state remotes)]
-      (is (= reqs [{:url "/comments/1" :method :get :body nil :key :comments}]))))
+          reqs (diff old-state new-state remotes)]
+      (is (= reqs [{:url "/comments/1" :method :get :body nil :path [:comments]}]))))
 
   (testing "get request with other id param"
     (let [old-state {:comment nil}
           new-state {:comment {:post_id 1 :id 2}}
           remotes {:comment {:get "/posts/:post_id/comments/:id"}}
-          reqs (build-http-requests old-state new-state remotes)]
-      (is (= reqs [{:url "/posts/1/comments/2" :method :get :body nil :key :comment}]))))
+          reqs (diff old-state new-state remotes)]
+      (is (= reqs [{:url "/posts/1/comments/2" :method :get :body nil :path [:comment]}]))))
 
   (testing "get request with other id param only"
     (let [old-state {:comments nil}
           new-state {:comments {:post_id 12}}
           remotes {:comments {:get "/posts/:post_id/comments"}}
-          reqs (build-http-requests old-state new-state remotes)]
-      (is (= reqs [{:url "/posts/12/comments" :method :get :body nil :key :comments}]))))
+          reqs (diff old-state new-state remotes)]
+      (is (= reqs [{:url "/posts/12/comments" :method :get :body nil :path [:comments]}]))))
 
   (testing "when a remote doesn't exist in state"
     (let [old {:comment nil}
           new {:comment {:post_id 12}}
           r {:comments {:get "/posts/:post_id/comments"}}
-          results (build-http-requests old new r)]
+          results (diff old new r)]
       (is (= results []))))
 
   (testing "when a state key doesn't exist in remotes"
     (let [old {:comment nil}
           new {:comment {:post_id 12}}
           r {:post {:get "/posts/:post_id"}}
-          results (build-http-requests old new r)]
+          results (diff old new r)]
       (is (= results []))))
 
   (testing "post request"
     (let [o {:comments []}
           n {:comments [{:post_id 13 :id 1 :content "new comment"}]}
           r {:comments {:post "/posts/:post_id/comments"}}
-          results (build-http-requests o n r)]
-      (is (= results [{:url "/posts/13/comments" :method :post :body {:post_id 13 :id 1 :content "new comment"} :key :comments}]))))
+          results (diff o n r)]
+      (is (= results [{:url "/posts/13/comments" :method :post :body {:post_id 13 :id 1 :content "new comment"} :path [:comments 0]}]))))
 
   (testing "put request without a list"
     (let [o {:r {:id 1 :title "t" :content "c"}}
           n {:r {:id 1 :title "title" :content "content"}}
           r {:r {:put "/posts/:id"}}
-          results (build-http-requests o n r)]
-      (is (= results [{:key :r :url "/posts/1" :method :put :body {:id 1 :title "title" :content "content"}}]))))
+          results (diff o n r)]
+      (is (= results [{:path [:r] :url "/posts/1" :method :put :body {:id 1 :title "title" :content "content"}}]))))
 
   (testing "put request with a vec"
     (let [o {:r [{:id 1 :title "t" :content "c"}]}
           n {:r [{:id 1 :title "title" :content "content"}]}
           r {:r {:put "/posts/:id"}}
-          results (build-http-requests o n r)]
-      (is (= results [{:key :r :url "/posts/1" :method :put :body {:id 1 :title "title" :content "content"}}])))))
+          results (diff o n r)]
+      (is (= results [{:path [:r 0] :url "/posts/1" :method :put :body {:id 1 :title "title" :content "content"}}]))))
+
+  (testing "post request with a 3rd item added"
+    (let [o {:r [{:id 1 :title "t" :content "c"} {:id 2 :title "t" :content "c"}]}
+          n {:r [{:id 1 :title "t" :content "c"} {:id 2 :title "t" :content "c"} {:id 3 :title "title" :content "content"}]}
+          r {:r {:post "/posts"}}
+          results (diff o n r)]
+      (is (= results [{:path [:r 2] :url "/posts" :method :post :body {:id 3 :title "title" :content "content"}}])))))

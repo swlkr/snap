@@ -159,7 +159,7 @@
             (merge-path)
             (select-keys [:url :method :body :path]))))
 
-(defn build-http-requests [old-state new-state remotes]
+(defn diff [old-state new-state remotes]
   (let [ks (keys remotes)]
     (->> ks
          (mapv #(build-http-request {:old-state old-state :new-state new-state :remotes remotes :key %}))
