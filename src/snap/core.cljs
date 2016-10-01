@@ -1,6 +1,6 @@
 (ns snap.core
   (:require [clojure.set :refer [difference]]
-           [clojure.string :as string]))
+            [clojure.string :as string]))
 
 (defn get-regex [str]
   (some->> str
