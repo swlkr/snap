@@ -79,14 +79,14 @@
   (->> (mapv #(get % k) [old-state new-state])
        (mapv vec->set)))
 
-(defn map-to-set [m]
+(defn map->set [m]
   (if (map? m)
     (set (conj [] m))
     m))
 
 (defn get-diff [old new]
   (->> [old new]
-       (mapv map-to-set)
+       (mapv map->set)
        (sort-by count)
        (reverse)
        (apply difference)))
