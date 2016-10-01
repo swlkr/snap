@@ -1,4 +1,4 @@
-(defproject snap "0.2.0"
+(defproject snap "1.0.0"
   :description "State change diff engine"
 
   :url "https://github.com/swlkr/snap"

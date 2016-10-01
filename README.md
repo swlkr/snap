@@ -11,7 +11,7 @@ Usage
 In your `project.clj`, add the following dependency:
 
 ```clojure
-[snap "0.2.0"]
+[snap "1.0.0"]
 ```
 
 Then, set up your remotes, global state and, oh snap! restful http requests from state changes!
@@ -24,14 +24,18 @@ Then, set up your remotes, global state and, oh snap! restful http requests from
 (def remotes {:posts {:get "/posts"
                       :put "/posts/:id"
                       :post "/posts"
-                      :delete "/posts/:id"}})
-              :post {:get "/posts/:id"}
+                      :delete "/posts/:id"}
+              :post {:get "/posts/:id"}})
 
 (def app-state {:posts [{:id 1 :title "Hodor" :content "Hodor hodor hodor"}]})
 (def new-state (update-in app-state [:posts] conj {:id 2 :title "Hodor hodor" :content "Hodor"})
 
-(snap/build-http-requests app-state new-state remotes)
-; => [{:url "/posts" :method :post :body {:id 2 :title "Hodor hodor" :content "Hodor"} :key :posts}]
+(snap/diff app-state new-state remotes)
+
+[{:url "/posts"
+  :method :post
+  :body {:id 2 :title "Hodor hodor" :content "Hodor"}
+  :path [:posts 1]}]
 ```
 
 Development
