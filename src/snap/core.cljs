@@ -130,6 +130,23 @@
         body (get-body method diff)]
     (merge {:body body} params)))
 
+(defn index-of [coll value]
+  (some (fn [[idx item]] (if (= value item) idx))
+        (map-indexed vector coll)))
+
+(defn get-path [key new-state method body]
+  (let [val (get new-state key)]
+    (if (and
+          (vector? val)
+          (not (nil? body)))
+      [key (index-of val body)]
+      [key])))
+
+(defn merge-path [params]
+  (let [{:keys [key new-state method body]} params
+        path (get-path key new-state method body)]
+    (merge {:path path} params)))
+
 (defn build-http-request [params]
   (let [{:keys [key old-state new-state remotes]} params]
     (some-> params
@@ -139,7 +156,8 @@
             (merge-remote)
             (merge-url)
             (merge-body)
-            (select-keys [:url :method :body :key]))))
+            (merge-path)
+            (select-keys [:url :method :body :path]))))
 
 (defn build-http-requests [old-state new-state remotes]
   (let [ks (keys remotes)]
