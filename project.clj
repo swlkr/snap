@@ -20,35 +20,28 @@
   :test-paths ["test"]
 
   :clean-targets ^{:protect false} [:target-path :compile-path "resources/public/js"]
+  :prep-tasks ["compile" ["cljsbuild" "once" "min"]]
+  :uberjar {:name "quiescent.jar"}
 
-  :repl-options {:init-ns user}
+  :repl-options {:init-ns snap.core}
 
   :cljsbuild {:builds
-              [{:id "app"
-                :source-paths ["src" "test"]
-
-                :compiler {:main snap.core
-                           :asset-path "js/compiled/out"
-                           :output-to "resources/public/js/compiled/snap.js"
-                           :output-dir "resources/public/js/compiled/out"
-                           :source-map-timestamp true}}
-
-               {:id "test"
-                :source-paths ["src" "test"]
-                :compiler {:output-to "resources/public/js/compiled/testable.js"
-                           :main snap.test-runner
-                           :optimizations :none
-                           :target :nodejs}}
-
-               {:id "min"
-                :source-paths ["src"]
-                :jar true
-                :compiler {:main snap.core
+               [{:id "min"
+                 :source-paths ["src"]
+                 :jar true
+                 :compiler {:main snap.core}
                            :output-to "resources/public/js/compiled/snap.js"
                            :output-dir "target"
                            :source-map-timestamp true
                            :optimizations :advanced
-                           :pretty-print false}}]}
+                           :pretty-print false}
+
+                {:id "test"
+                 :source-paths ["src" "test"]
+                 :compiler {:output-to "resources/public/js/compiled/testable.js"}
+                           :main snap.test-runner
+                           :optimizations :none
+                           :target :nodejs}]}
 
   :doo {:build "test"}
 
