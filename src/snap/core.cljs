@@ -70,14 +70,14 @@
     (is-get? new) :get
     :else nil))
 
-(defn vec-to-set [val]
+(defn vec->set [val]
   (if (or (vector? val))
     (set val)
     val))
 
 (defn get-sets [k old-state new-state]
   (->> (mapv #(get % k) [old-state new-state])
-       (mapv vec-to-set)))
+       (mapv vec->set)))
 
 (defn map-to-set [m]
   (if (map? m)
